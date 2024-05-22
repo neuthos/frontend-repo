@@ -1,95 +1,95 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import UsersApi from "@/apis/users.api";
+import ModalLogin from "@/components/ModalLogin";
+import UserCard from "@/components/UserCard";
+import UserFormModal from "@/components/UserFormModal";
+import {IUserListState} from "@/interfaces/user.interface";
+import {setSnackbarMessage, setUsers} from "@/store/reducer/userReducer";
+import {useAppDispatch, useAppSelector} from "@/store/store";
+import sleep from "@/utils/sleep";
+import {Box, CircularProgress, Grid, Snackbar, Typography} from "@mui/material";
+import {useEffect, useState} from "react";
+const style = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 2,
+  p: 4,
+};
 
 export default function Home() {
+  const dispatch = useAppDispatch();
+  const userState = useAppSelector((state) => state.userState);
+  const authState = useAppSelector((state) => state.auth);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getUsers = async () => {
+      if (!loading) setLoading(true);
+      const response = await UsersApi.lists();
+      await sleep(1000);
+      setLoading(false);
+      const users: IUserListState[] = response?.data || [];
+
+      dispatch(setUsers(users));
+    };
+
+    if (authState.isLoggedIn) getUsers();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userState.userTrigger, authState.isLoggedIn]);
+
+  console.log(userState);
+
+  if (!authState.isLoggedIn)
+    return (
+      <>
+        <ModalLogin />
+
+        <Box sx={style}>
+          <Typography variant="h4" gutterBottom>
+            Unauthorized
+          </Typography>
+        </Box>
+      </>
+    );
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <main>
+      <Snackbar
+        anchorOrigin={{vertical: "top", horizontal: "center"}}
+        open={userState.snackbarMessage !== ""}
+        onClose={() => dispatch(setSnackbarMessage(""))}
+        message={userState.snackbarMessage}
+        key={"userSnackbar"}
+      />
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      <Box sx={style}>
+        <Typography variant="h4" gutterBottom>
+          List of users
+        </Typography>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+        <UserFormModal userId={undefined} />
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+        {loading ? (
+          <>
+            <CircularProgress />
+          </>
+        ) : (
+          userState.users && (
+            <Grid container spacing={2}>
+              {userState.users.map((user, key) => (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={key}>
+                  <UserCard user={user} />
+                </Grid>
+              ))}
+            </Grid>
+          )
+        )}
+      </Box>
     </main>
   );
 }
