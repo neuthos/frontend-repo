@@ -9,8 +9,8 @@ import {useForm, Controller} from "react-hook-form";
 import {CircularProgress, TextField, Typography} from "@mui/material";
 import UsersApi from "@/apis/users.api";
 import {IUserListState} from "@/interfaces/user.interface";
-import {useAppDispatch} from "@/store/store";
-import {setUserTrigger} from "@/store/reducer/userReducer";
+import {useAppDispatch, useAppSelector} from "@/store/store";
+import {setErrMessage, setUserTrigger} from "@/store/reducer/userReducer";
 import {LoadingButton} from "@mui/lab";
 import sleep from "@/utils/sleep";
 
@@ -33,10 +33,11 @@ const style = {
 
 export default function UserFormModal({userId}: {userId: string | undefined}) {
   const dispatch = useAppDispatch();
+  const userState = useAppSelector((state) => state.userState);
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(userId ? true : false);
   const [formLoading, setFormLoading] = useState(false);
-  const [errMessage, setErrMessage] = useState("");
   const {
     control,
     handleSubmit,
@@ -45,7 +46,10 @@ export default function UserFormModal({userId}: {userId: string | undefined}) {
   } = useForm();
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    dispatch(setErrMessage(""));
+    setOpen(false);
+  };
 
   const onSubmit = async (data: any) => {
     const isUpdate = !!userId;
@@ -59,11 +63,13 @@ export default function UserFormModal({userId}: {userId: string | undefined}) {
       height: data.height,
     };
     setFormLoading(true);
+    dispatch(setErrMessage(""));
     let response;
     if (isUpdate) response = await UsersApi.update(userId, dataUser);
     else response = await UsersApi.create(dataUser);
     await sleep(1000);
     setFormLoading(false);
+
     if (response.success) {
       dispatch(setUserTrigger(Math.random()));
       handleClose();
@@ -76,7 +82,7 @@ export default function UserFormModal({userId}: {userId: string | undefined}) {
         height: "",
       });
     } else {
-      setErrMessage(response.message);
+      dispatch(setErrMessage(response.message));
     }
   };
 
@@ -139,6 +145,17 @@ export default function UserFormModal({userId}: {userId: string | undefined}) {
                 {userId ? "Edit user" : "Add new user"}
               </Typography>
 
+              {userState.errMessage && (
+                <Typography
+                  sx={{color: "red"}}
+                  variant="caption"
+                  display="block"
+                  gutterBottom
+                >
+                  {userState.errMessage}
+                </Typography>
+              )}
+
               <Controller
                 name="name"
                 control={control}
@@ -200,7 +217,13 @@ export default function UserFormModal({userId}: {userId: string | undefined}) {
                 name="age"
                 control={control}
                 defaultValue=""
-                rules={{required: "Age is required"}}
+                rules={{
+                  required: "Age is required",
+                  min: {
+                    value: 18,
+                    message: "Age must be at least 18",
+                  },
+                }}
                 render={({field}) => (
                   <TextField
                     {...field}

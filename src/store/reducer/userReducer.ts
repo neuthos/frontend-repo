@@ -7,14 +7,14 @@ export interface IUserState {
   users: IUserListState[];
   user: IUserListState | null;
   userTrigger: number;
-  snackbarMessage: string;
+  errMessage: string;
 }
 
 const initialState: IUserState = {
   users: [],
   user: null,
   userTrigger: 0,
-  snackbarMessage: "",
+  errMessage: "",
 };
 
 export const userSlice = createSlice({
@@ -31,12 +31,12 @@ export const userSlice = createSlice({
     setUserTrigger: (state, action: PayloadAction<number>) => {
       state.userTrigger = action.payload;
     },
-    setSnackbarMessage: (state, action: PayloadAction<string>) => {
-      state.snackbarMessage = action.payload;
+    setErrMessage: (state, action: PayloadAction<string>) => {
+      state.errMessage = action.payload;
     },
   },
 });
 
-export const {setUsers, setUser, setUserTrigger, setSnackbarMessage} =
+export const {setUsers, setUser, setUserTrigger, setErrMessage} =
   userSlice.actions;
 export const userReducer = userSlice.reducer;

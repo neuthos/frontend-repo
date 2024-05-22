@@ -5,10 +5,10 @@ import ModalLogin from "@/components/ModalLogin";
 import UserCard from "@/components/UserCard";
 import UserFormModal from "@/components/UserFormModal";
 import {IUserListState} from "@/interfaces/user.interface";
-import {setSnackbarMessage, setUsers} from "@/store/reducer/userReducer";
+import {setUsers} from "@/store/reducer/userReducer";
 import {useAppDispatch, useAppSelector} from "@/store/store";
 import sleep from "@/utils/sleep";
-import {Box, CircularProgress, Grid, Snackbar, Typography} from "@mui/material";
+import {Box, CircularProgress, Grid, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 const style = {
   display: "flex",
@@ -42,8 +42,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userState.userTrigger, authState.isLoggedIn]);
 
-  console.log(userState);
-
   if (!authState.isLoggedIn)
     return (
       <>
@@ -59,14 +57,6 @@ export default function Home() {
 
   return (
     <main>
-      <Snackbar
-        anchorOrigin={{vertical: "top", horizontal: "center"}}
-        open={userState.snackbarMessage !== ""}
-        onClose={() => dispatch(setSnackbarMessage(""))}
-        message={userState.snackbarMessage}
-        key={"userSnackbar"}
-      />
-
       <Box sx={style}>
         <Typography variant="h4" gutterBottom>
           List of users
